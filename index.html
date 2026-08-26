@@ -41,7 +41,7 @@
         </div>
         <div class="hero-card" aria-label="How Version 1 works">
           <div><span>01</span><strong>Choose a formula</strong></div>
-          <div><span>02</span><strong>Set batch and dye load</strong></div>
+          <div><span>02</span><strong>Set the pillar batch</strong></div>
           <div><span>03</span><strong>Follow the weighing plan</strong></div>
         </div>
       </section>
@@ -117,15 +117,13 @@
                 <input id="base-wax" name="baseWaxTargetG" inputmode="decimal" value="100.000" required>
                 <b>g</b>
               </span>
-              <small>The mass basis used to calculate the pure dye load.</small>
+              <small>Freedom Pillar Wax · American Soy Organics</small>
             </label>
             <label class="field">
-              <span>Pure dye load</span>
-              <span class="input-with-unit">
-                <input id="dye-load" name="dyeLoadPct" inputmode="decimal" value="0.30" required>
-                <b>%</b>
-              </span>
-              <small>Transcribed soy guidance: approximately 0.227–0.568%.</small>
+              <span>Color strength</span>
+              <select id="dye-strength" aria-describedby="dye-strength-detail"></select>
+              <input id="dye-load" name="dyeLoadPct" type="hidden" value="0.50">
+              <small id="dye-strength-detail">0.500 g pure dye per 100 g base wax. Relative dye amount—not a linear prediction of cured color intensity.</small>
             </label>
           </div>
 
@@ -153,21 +151,23 @@
               <input type="checkbox" id="fragrance-enabled">
               <span>
                 <strong>Include fragrance</strong>
-                <small>Fragrance can affect the finished color.</small>
+                <small>Calculate liquid volume from the bottle's fl oz/lb instruction.</small>
               </span>
             </label>
-            <div class="optional-fields two-column" id="fragrance-fields" hidden>
+            <div class="optional-fields two-column fragrance-fields" id="fragrance-fields" hidden>
               <label class="field">
                 <span>Fragrance name</span>
                 <input id="fragrance-name" placeholder="e.g. Garden rose">
               </label>
               <label class="field">
-                <span>Fragrance load</span>
-                <span class="input-with-unit">
-                  <input id="fragrance-load" inputmode="decimal" placeholder="Required">
-                  <b>%</b>
+                <span>Bottle ratio</span>
+                <span class="input-with-unit wide-unit">
+                  <input id="fragrance-ratio" inputmode="decimal" value="1.00" placeholder="Required">
+                  <b>fl oz/lb</b>
                 </span>
+                <small>US fluid ounces of fragrance per pound of wax + Vybar.</small>
               </label>
+              <p class="inline-note fragrance-note">Volume is calculated directly from wax + Vybar. No oil density is needed, but the exact finished batch weight cannot be calculated from a volume-only instruction.</p>
             </div>
           </div>
 

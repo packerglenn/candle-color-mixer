@@ -1,4 +1,5 @@
 import {
+  APPLICATION_PRESETS,
   DYES,
   DYE_BY_ID,
   FORMULA_TEMPLATES,
@@ -36,6 +37,7 @@ const targetHex = document.querySelector("#target-hex");
 const brightness = document.querySelector("#brightness");
 const modeFormula = document.querySelector("#mode-formula");
 const modeWheel = document.querySelector("#mode-wheel");
+const dyeStrengthSelect = document.querySelector("#dye-strength");
 
 let customComponents = [
   { dyeId: "candle-shop-red", percent: "70" },
@@ -48,6 +50,7 @@ let wheelState = rgbToHsv(hexToRgb(selectedTargetHex));
 let visualComponents = null;
 let selectedScreenName = findNearestCssNamedColor(selectedTargetHex);
 const dyeProcessGuidance = resolveDyeProcessGuidance();
+const dyeStrengthById = new Map(APPLICATION_PRESETS.dyeStrengths.map((strength) => [strength.id, strength]));
 
 function escapeHtml(value) {
   return String(value)
@@ -109,6 +112,21 @@ function initTemplates() {
     )),
     '<option value="custom">Custom formula</option>',
   ].join("");
+}
+
+function updateDyeStrength({ recalculate = true } = {}) {
+  const strength = dyeStrengthById.get(dyeStrengthSelect.value);
+  document.querySelector("#dye-load").value = strength.pureDyeLoadPct;
+  document.querySelector("#dye-strength-detail").textContent = `${ExactDecimal.parse(strength.pureDyeLoadPct).toFixed(3)} g pure dye per 100 g base wax. Relative dye amount—not a linear prediction of cured color intensity.`;
+  if (recalculate) recalculateVisibleResult();
+}
+
+function initDyeStrength() {
+  dyeStrengthSelect.innerHTML = APPLICATION_PRESETS.dyeStrengths.map((strength) => (
+    `<option value="${strength.id}">${escapeHtml(strength.displayName)} · ${strength.relativeStrengthPct}% strength · ${strength.pureDyeLoadPct}% dye load</option>`
+  )).join("");
+  dyeStrengthSelect.value = APPLICATION_PRESETS.defaultDyeStrengthId;
+  updateDyeStrength({ recalculate: false });
 }
 
 function drawColorWheel() {
@@ -421,7 +439,7 @@ function collectInput() {
     fragrance: {
       enabled: document.querySelector("#fragrance-enabled").checked,
       name: document.querySelector("#fragrance-name").value.trim(),
-      loadPct: document.querySelector("#fragrance-load").value.trim(),
+      ratioFlOzPerLb: document.querySelector("#fragrance-ratio").value.trim(),
     },
     visualTarget: targetMode === "wheel"
       ? {
@@ -451,6 +469,22 @@ function formatPercent(value) {
   return `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}%`;
 }
 
+function formatVolume(value) {
+  const number = Number(value);
+  const maximumFractionDigits = number !== 0 && Math.abs(number) < 0.001 ? 9 : 6;
+  return `${number.toLocaleString(undefined, {
+    minimumFractionDigits: 3,
+    maximumFractionDigits,
+  })} mL`;
+}
+
+function formatFluidOunces(value) {
+  return `${Number(value).toLocaleString(undefined, {
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 6,
+  })} fl oz`;
+}
+
 function formatRatioPercent(ratio) {
   return ExactDecimal.parse(ratio).multiply(ExactDecimal.ONE_HUNDRED).toSignificant();
 }
@@ -475,7 +509,13 @@ function weighingRows(result) {
     });
   }
   if (result.additive) rows.push({ material: result.additive.name, detail: `${result.additive.loadPct}% of base wax`, scaleName: "Precision scale", scale: result.additive.scale });
-  if (result.fragrance) rows.push({ material: result.fragrance.name, detail: `${result.fragrance.loadPct}% of base wax`, scaleName: "Precision scale", scale: result.fragrance.scale });
+  if (result.fragrance) rows.push({
+    kind: "volume",
+    material: result.fragrance.name,
+    detail: `${result.fragrance.ratioFlOzPerLb} fl oz/lb of wax + Vybar`,
+    targetMl: result.fragrance.targetMl,
+    targetFlOz: result.fragrance.targetFlOz,
+  });
   return rows;
 }
 
@@ -496,8 +536,8 @@ function renderResults(result, { scroll = true } = {}) {
 
     <div class="summary-grid">
       <article><span>Total base wax</span><strong>${formatMass(result.baseWax.targetTotalG)}</strong></article>
-      <article><span>Pure dye</span><strong>${formatMass(result.pureDyeTotalG)}</strong></article>
-      <article class="accent"><span>Finished formulation</span><strong>${formatMass(result.finishedFormulationTargetG)}</strong></article>
+      <article><span>Pure dye · ${escapeHtml(dyeStrengthById.get(dyeStrengthSelect.value).displayName)}</span><strong>${formatMass(result.pureDyeTotalG)}</strong></article>
+      <article class="accent"><span>${result.fragrance ? "Known mass + fragrance" : "Finished formulation"}</span><strong>${result.fragrance ? `${formatMass(result.knownFormulationMassBeforeFragranceG)} + ${formatVolume(result.fragrance.targetMl)}` : formatMass(result.finishedFormulationTargetG)}</strong></article>
     </div>
 
     <section class="process-guidance result-guidance" aria-label="Dye temperature and mixing guidance">
@@ -513,18 +553,24 @@ function renderResults(result, { scroll = true } = {}) {
 
     <div class="plan-section">
       <div class="section-title">
-        <div><p class="step-label">Weighing order</p><h3>Mathematical vs. displayable</h3></div>
+        <div><p class="step-label">Production order</p><h3>Mathematical vs. measurable</h3></div>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Material</th><th>Mathematical</th><th>Scale target</th><th>Feasibility</th></tr></thead>
+          <thead><tr><th>Material</th><th>Mathematical</th><th>Production target</th><th>Method / feasibility</th></tr></thead>
           <tbody>
             ${rows.map((row, index) => `
               <tr>
                 <td><span class="row-number">${String(index + 1).padStart(2, "0")}</span><div><strong>${escapeHtml(row.material)}</strong><small>${escapeHtml(row.detail)}</small></div></td>
-                <td title="Canonical: ${row.scale.targetG}">${formatMass(row.scale.targetG)}</td>
-                <td title="Canonical: ${row.scale.displayableTargetG}"><strong>${formatMass(row.scale.displayableTargetG)}</strong><small>${row.scale.plannedDeviationPct === null ? "Not applicable" : `${formatPercent(row.scale.plannedDeviationPct)} planned deviation`}</small></td>
-                <td><span class="status status-${row.scale.status}">${statusLabel(row.scale.status)}</span><small>${row.scale.relativeIncrementPct === null ? "" : `${formatPercent(row.scale.relativeIncrementPct)} increment`}</small></td>
+                ${row.kind === "volume" ? `
+                  <td title="Canonical: ${row.targetMl} mL">${formatVolume(row.targetMl)}</td>
+                  <td title="Canonical: ${row.targetMl} mL"><strong>${formatVolume(row.targetMl)}</strong><small>${formatFluidOunces(row.targetFlOz)}</small></td>
+                  <td><span class="status status-not_applicable">measure volume</span><small>US fluid ounces</small></td>
+                ` : `
+                  <td title="Canonical: ${row.scale.targetG}">${formatMass(row.scale.targetG)}</td>
+                  <td title="Canonical: ${row.scale.displayableTargetG}"><strong>${formatMass(row.scale.displayableTargetG)}</strong><small>${row.scale.plannedDeviationPct === null ? "Not applicable" : `${formatPercent(row.scale.plannedDeviationPct)} planned deviation`}</small></td>
+                  <td><span class="status status-${row.scale.status}">${statusLabel(row.scale.status)}</span><small>${row.scale.relativeIncrementPct === null ? "" : `${formatPercent(row.scale.relativeIncrementPct)} increment`}</small></td>
+                `}
               </tr>
             `).join("")}
           </tbody>
@@ -542,9 +588,15 @@ function renderResults(result, { scroll = true } = {}) {
         </div>
       `).join("")}
       <div class="mass-basis-note">
-        <strong>Mass basis</strong>
-        <span>${formatMass(result.baseWax.targetTotalG)} base wax + ${formatMass(result.pureDyeTotalG)} pure dye${result.additive ? ` + ${formatMass(result.additive.targetG)} additive` : ""}${result.fragrance ? ` + ${formatMass(result.fragrance.targetG)} fragrance` : ""} = ${formatMass(result.finishedFormulationTargetG)} finished formulation.</span>
+        <strong>Mass accounting</strong>
+        <span>${formatMass(result.baseWax.targetTotalG)} base wax + ${formatMass(result.pureDyeTotalG)} pure dye${result.additive ? ` + ${formatMass(result.additive.targetG)} additive` : ""} = ${formatMass(result.knownFormulationMassBeforeFragranceG)}${result.fragrance ? " known mass before fragrance. The exact finished weight is unavailable because fragrance is specified only by volume." : " finished formulation."}</span>
       </div>
+      ${result.fragrance ? `
+        <div class="fragrance-result-note">
+          <strong>Fragrance volume</strong>
+          <span>${formatVolume(result.fragrance.targetMl)} (${formatFluidOunces(result.fragrance.targetFlOz)}) from a ${formatMass(result.fragrance.basisG)} wax + Vybar basis at ${result.fragrance.ratioFlOzPerLb} fl oz/lb. Use a suitably graduated liquid measuring tool.</span>
+        </div>
+      ` : ""}
     </div>
   `;
   resultsRoot.querySelector(".print-button").addEventListener("click", () => window.print());
@@ -569,7 +621,8 @@ function resetForm() {
   selectedTargetHex = "#b63d69";
   wheelState = rgbToHsv(hexToRgb(selectedTargetHex));
   document.querySelector("#base-wax").value = "100.000";
-  document.querySelector("#dye-load").value = "0.30";
+  dyeStrengthSelect.value = APPLICATION_PRESETS.defaultDyeStrengthId;
+  updateDyeStrength({ recalculate: false });
   document.querySelector("#wax-readability").value = "0.1";
   document.querySelector("#wax-capacity").value = "5000";
   document.querySelector("#dye-readability").value = "0.001";
@@ -597,6 +650,7 @@ document.querySelector("#additive-enabled").addEventListener("change", (event) =
 document.querySelector("#fragrance-enabled").addEventListener("change", (event) => {
   document.querySelector("#fragrance-fields").hidden = !event.target.checked;
 });
+dyeStrengthSelect.addEventListener("change", () => updateDyeStrength());
 document.querySelector("#reset-button").addEventListener("click", resetForm);
 form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -610,6 +664,7 @@ form.addEventListener("submit", (event) => {
 });
 
 initTemplates();
+initDyeStrength();
 document.querySelector("#process-guidance").innerHTML = processGuidanceMarkup();
 initColorWheel();
 renderFormula();

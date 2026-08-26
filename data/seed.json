@@ -15,6 +15,16 @@
     "id": "vybar-103-pb165",
     "displayName": "Vybar 103 / PB 165"
   },
+  "applicationPresets": {
+    "waxApplication": "pillar",
+    "defaultDyeStrengthId": "regular",
+    "dyeStrengths": [
+      { "id": "regular", "displayName": "Regular", "relativeStrengthPct": "100", "pureDyeLoadPct": "0.50" },
+      { "id": "medium", "displayName": "Medium", "relativeStrengthPct": "90", "pureDyeLoadPct": "0.45" },
+      { "id": "light", "displayName": "Light", "relativeStrengthPct": "80", "pureDyeLoadPct": "0.40" }
+    ],
+    "status": "engineering_starting_point"
+  },
   "dyeSystem": {
     "id": "candle-shop-16-color-kit",
     "displayName": "Candle Shop 16-color kit"

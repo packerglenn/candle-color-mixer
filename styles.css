@@ -546,6 +546,10 @@ select:hover {
   padding-right: 42px;
 }
 
+.input-with-unit.wide-unit input {
+  padding-right: 76px;
+}
+
 .input-with-unit b {
   position: absolute;
   top: 50%;
@@ -740,6 +744,16 @@ input[type="range"] {
 .optional-fields {
   margin-left: 30px;
   padding: 0 0 6px;
+}
+
+.fragrance-fields .field:first-child,
+.fragrance-note {
+  grid-column: 1 / -1;
+}
+
+.fragrance-note {
+  margin: -2px 0 0;
+  line-height: 1.5;
 }
 
 .scale-settings {
@@ -1190,6 +1204,31 @@ td small {
   padding: 13px;
   color: var(--muted);
   font-size: 0.72rem;
+}
+
+.fragrance-result-note {
+  margin-top: 12px;
+  border: 1px solid #cfdcd5;
+  border-radius: 10px;
+  background: #eef5f1;
+  padding: 12px 14px;
+}
+
+.fragrance-result-note strong,
+.fragrance-result-note span {
+  display: block;
+}
+
+.fragrance-result-note strong {
+  color: var(--forest);
+  font-size: 0.78rem;
+}
+
+.fragrance-result-note span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.5;
 }
 
 .mass-basis-note strong {

@@ -2,7 +2,7 @@
 
 - **Repository:** `packerglenn/candle-color-mixer`
 - **Status:** Approved for Version 1 implementation
-- **Specification version:** 0.5.1
+- **Specification version:** 0.5.5
 - **Date:** 2026-08-26
 - **Primary use:** Pinewood Blooms small-batch wax color formulation
 - **Initial delivery:** Static-first web application / installable PWA
@@ -33,11 +33,12 @@ Release 1.0 shall provide:
 - nearest W3C CSS named-color reference for the selected sRGB screen color;
 - custom fixed-ratio formula entry;
 - constrained selection within manufacturer ratio ranges;
-- base-wax mass and pure-dye-load entry;
+- Freedom Pillar Wax batch-mass entry and a constrained three-level color-strength selector;
 - exact component-mass calculation;
 - direct-dye component calculation only;
 - scale feasibility and representability warnings;
 - visible manufacturer dye-temperature and mixing guidance;
+- fragrance-oil volume calculation from an operator-entered US fl oz/lb ratio;
 - a complete production weighing plan;
 - immutable bundled reference data.
 
@@ -131,8 +132,11 @@ Stable IDs shall be used, such as `candle-shop-red`. Display names are not ident
 ### 5.2 Known base wax
 
 - Manufacturer: American Soy Organics
-- Product: Freedom Pillar Wax / Freedom Soy Wax Beads
+- Product: Freedom Pillar Wax
 - Initial ID: `aso-freedom-pillar-wax`
+- Release 1 application: molded pillar candles
+
+Release 1 shall display the product and manufacturer names separately and shall use “pillar” as the application preset. It shall not derive the wax identity from the manufacturer’s company name.
 
 ### 5.3 Known additive
 
@@ -183,20 +187,24 @@ All production masses shall use grams internally.
 - `baseWaxTargetG`: intended base-wax material, excluding pure dye, additives, and fragrance.
 - `pureDyeTargetG`: total pure dye target.
 - `additiveTargetG`: additive mass outside the base-wax basis.
-- `fragranceTargetG`: fragrance mass outside the base-wax basis.
-- `finishedFormulationTargetG`: base wax + pure dye + additives + fragrance.
+- `fragranceTargetFlOz`: fragrance liquid volume in US fluid ounces.
+- `fragranceTargetMl`: the same fragrance liquid volume in milliliters.
+- `knownFormulationMassBeforeFragranceG`: base wax + pure dye + additives.
+- `finishedFormulationTargetG`: exact finished mass when fragrance is absent; `null` when a fragrance target is specified only by volume.
 
 Therefore:
 
 ```text
-finishedFormulationTargetG =
+knownFormulationMassBeforeFragranceG =
     baseWaxTargetG
   + pureDyeTargetG
   + sum(additiveTargetG)
-  + fragranceTargetG
+
+finishedFormulationTargetG =
+  fragrance absent ? knownFormulationMassBeforeFragranceG : null
 ```
 
-The UI shall show `baseWaxTargetG` and `finishedFormulationTargetG` with unambiguous labels.
+The UI shall show `baseWaxTargetG`, the known mass before fragrance, and the fragrance volume with unambiguous labels. It shall not claim an exact finished mass when fragrance density is unavailable.
 
 ### 6.2 Dye load
 
@@ -216,16 +224,28 @@ sum(componentRatio) = 1
 
 Fixed ratios shall be non-negative, no greater than 1, unique by dye ID, and sum exactly to 1 in decimal arithmetic.
 
-### 6.4 Additive and fragrance loads
+### 6.4 Additive and fragrance dosing
 
-The default basis is base-wax mass:
+Vybar remains a percentage of base-wax mass:
 
 ```text
 additiveTargetG = baseWaxTargetG × additiveLoadPct / 100
-fragranceTargetG = baseWaxTargetG × fragranceLoadPct / 100
 ```
 
-Every load field shall declare its basis. Release 1 supports only `base_wax_mass`; an unsupported basis is a hard error.
+Fragrance shall use the operator-entered bottle ratio in **US fluid ounces per avoirdupois pound**. Release 1 intentionally interprets the supplied `1 oz/lb` instruction as `1 US fl oz/lb` because the product is a liquid and the operator has selected volume dosing.
+
+```text
+gramsPerPound          = 453.59237
+millilitersPerUsFlOz   = 29.5735295625
+fragranceBasisG        = baseWaxTargetG + additiveTargetG
+fragranceBasisLb       = fragranceBasisG / gramsPerPound
+fragranceTargetFlOz    = fragranceBasisLb × fragranceRatioFlOzPerLb
+fragranceTargetMl      = fragranceTargetFlOz × millilitersPerUsFlOz
+```
+
+`fragranceRatioFlOzPerLb` is required whenever fragrance is enabled and shall be greater than zero. The UI shall make mL the primary fragrance production target and also show the equivalent US fl oz value. No density shall be requested or assumed. Consequently, fragrance mass and exact finished-formulation mass shall remain unavailable rather than being inferred from volume.
+
+Every load field shall declare its basis. Release 1 supports `base_wax_mass` for Vybar and a US `fluid_ounces_per_wax_plus_additive_pound` ratio for fragrance; any other basis is a hard error.
 
 ### 6.5 Numeric representation
 
@@ -251,7 +271,15 @@ A `FormulaTemplate` represents source guidance. It contains a dye system and fix
 - a verified production status;
 - a silently selected dye load.
 
-A UI may preselect 0.30% as an explicitly labeled engineering starting value, but the operator must confirm it.
+Release 1 shall provide only these three explicitly labeled pillar color-strength presets:
+
+| UI label | Relative dye amount | Pure dye load |
+|---|---:|---:|
+| Regular | 100% | 0.50% of base wax |
+| Medium | 90% | 0.45% of base wax |
+| Light | 80% | 0.40% of base wax |
+
+Regular shall be the default. “Relative dye amount” describes linear dosage relative to the 0.50% Regular preset; it shall not be presented as a linear prediction of perceived or cured color intensity. All three loads remain below the transcribed solid-dye maximum of approximately `0.568%`. They are engineering starting points, not calibrated production values or burn-safety approvals.
 
 ### 7.2 Recipe and recipe version
 
@@ -533,9 +561,11 @@ Processing order:
 3. Calculate total pure dye.
 4. Calculate each component’s target pure-dye mass.
 5. Treat each component target as its direct-dye weighing target.
-6. Calculate additives, fragrance, and finished formulation mass.
-7. Evaluate every weighing against the selected scale.
-8. Return canonical targets, displayable targets, warnings, and reason codes.
+6. Calculate additives.
+7. Convert wax + additive mass to pounds, apply the fragrance fl oz/lb ratio, and convert the result to mL.
+8. Calculate known formulation mass before fragrance; return exact finished mass only when fragrance is absent.
+9. Evaluate each mass-weighing target against the selected scale; do not represent volume as a scale target.
+10. Return canonical targets, displayable targets, warnings, and reason codes.
 
 The same canonical input and reference-data versions shall produce byte-equivalent canonical result data. Display strings may vary only by locale and configured display precision.
 
@@ -543,23 +573,23 @@ The same canonical input and reference-data versions shall produce byte-equivale
 
 ### 12.1 Raspberry, direct dye
 
-For 100.000 g base wax at 0.30% dye load:
+For 100.000 g Freedom Pillar Wax at the default Regular 0.50% pillar dye preset:
 
 ```text
-total dye = 100 × 0.003 = 0.300 g
-red        = 0.300 × 0.70 = 0.210 g
-blue       = 0.300 × 0.25 = 0.075 g
-white      = 0.300 × 0.05 = 0.015 g
-finished mass before additives/fragrance = 100.300 g
+total dye = 100 × 0.005 = 0.500 g
+red        = 0.500 × 0.70 = 0.350 g
+blue       = 0.500 × 0.25 = 0.125 g
+white      = 0.500 × 0.05 = 0.025 g
+finished mass before additives/fragrance = 100.500 g
 ```
 
 At 250.000 g base wax:
 
 ```text
-total dye = 0.7500 g
-red       = 0.5250 g
-blue      = 0.1875 g
-white     = 0.0375 g
+total dye = 1.2500 g
+red       = 0.8750 g
+blue      = 0.3125 g
+white     = 0.0625 g
 ```
 
 ### 12.2 Scale example
@@ -573,6 +603,19 @@ planned deviation   = |0.02 - 0.015| / 0.015 × 100 = 33.333…%
 ```
 
 The result is `poor`; a larger batch or finer scale is recommended.
+
+### 12.3 Fragrance volume
+
+For 100.000 g base wax, 0.500 g Vybar, and a bottle ratio interpreted as 1 US fl oz/lb:
+
+```text
+fragrance basis  = 100.000 + 0.500 = 100.500 g
+basis in pounds  = 100.500 / 453.59237 = 0.221564573… lb
+fragrance fl oz  = 0.221564573… × 1 = 0.221564573… US fl oz
+fragrance volume = 0.221564573… × 29.5735295625 = 6.552446464… mL
+```
+
+The production target is the calculated mL value. Known mass before fragrance is 101.000 g when the 0.500 g dye from Section 12.1 is included; exact finished mass remains unavailable without density.
 
 ## 13. Color science boundary
 
@@ -682,7 +725,7 @@ Calibration shall be staged:
 4. Replicate independent batches for recipes intended to receive high confidence.
 5. Ongoing production observations.
 
-Suggested exploratory loads of 0.24%, 0.35%, and 0.50% remain within the transcribed soy-wax guidance, but they are not production defaults.
+Exploratory loads of 0.24% and 0.35% remain useful comparison samples outside the streamlined UI. Release 1 exposes Regular 0.50%, Medium 0.45%, and Light 0.40% to avoid unnecessarily pale starting samples while allowing controlled strength reduction. These presets remain within the transcribed solid-dye range applicable to the manufacturer-described wax composition, but none is a verified Pinewood Blooms production standard until physical samples and burn tests are approved.
 
 ### 14.4 Observation rules
 
@@ -1250,15 +1293,16 @@ All tests in the applicable release gate are mandatory. Numeric comparisons use 
 
 ### 23.2 Fixed-formula tests
 
-1. Raspberry at 100 g and 0.30% returns 0.300 g total and 0.210/0.075/0.015 g components.
-2. Raspberry at 250 g returns 0.7500 g total and 0.5250/0.1875/0.0375 g components.
-3. Scaling 100 → 250 → 100 uses ratios and canonical inputs, returning the original result.
-4. Coral, Lime, Olive midpoint, Turquoise midpoint, and Gray coal midpoint match Section 8 and the original worked values.
-5. Ratios totaling 0.999 or 1.001 fail; no silent normalization occurs.
-6. A negative ratio, ratio over 1, duplicate dye, or missing dye reference fails.
-7. Zero dye load returns zero component masses and `not_applicable` scale percentages without division by zero.
-8. Inputs containing `NaN`, infinity, exponent notation, commas, or embedded units fail.
-9. Repeating the same calculation 1,000 times produces identical canonical result JSON.
+1. Raspberry at Regular with 100 g and 0.50% returns 0.500 g total and 0.350/0.125/0.025 g components.
+2. Raspberry at Regular with 250 g returns 1.2500 g total and 0.8750/0.3125/0.0625 g components.
+3. At 100 g, Regular/Medium/Light return exactly 0.500/0.450/0.400 g total pure dye while preserving component ratios.
+4. Scaling 100 → 250 → 100 uses ratios and canonical inputs, returning the original result.
+5. Coral, Lime, Olive midpoint, Turquoise midpoint, and Gray coal midpoint match Section 8 and the original worked values.
+6. Ratios totaling 0.999 or 1.001 fail; no silent normalization occurs.
+7. A negative ratio, ratio over 1, duplicate dye, or missing dye reference fails.
+8. Zero dye load returns zero component masses and `not_applicable` scale percentages without division by zero.
+9. Inputs containing `NaN`, infinity, exponent notation, commas, or embedded units fail.
+10. Repeating the same calculation 1,000 times produces identical canonical result JSON.
 
 ### 23.3 Range-template tests
 
@@ -1274,7 +1318,7 @@ All tests in the applicable release gate are mandatory. Numeric comparisons use 
 
 1. Every dose-plan component has method `direct`.
 2. Every component’s target weighing equals its target pure-dye mass exactly.
-3. Raspberry at 100 g and 0.30% produces direct targets of 0.210/0.075/0.015 g.
+3. Raspberry at 100 g and the Regular 0.50% pillar preset produces direct targets of 0.350/0.125/0.025 g.
 4. No dosing-method or concentration field is accepted as production intent.
 5. Base wax is weighed directly and receives no carrier correction.
 
@@ -1288,6 +1332,16 @@ All tests in the applicable release gate are mandatory. Numeric comparisons use 
 6. A gross dose above capacity or below configured minimum load fails for that scale.
 7. Zero or negative readability/capacity fails.
 8. Feasibility equals the worst available classification, with deterministic boundary behavior at 2%, 5%, and 10%.
+
+### 23.5.1 Fragrance-volume tests
+
+1. Unit conversion uses exactly 453.59237 g/lb and 29.5735295625 mL/US fl oz.
+2. A 100.000 g wax basis with no Vybar and 1 US fl oz/lb returns 0.220462262… US fl oz and 6.519847228… mL.
+3. A 100.000 g wax target plus 0.500 g Vybar at 1 US fl oz/lb returns a 100.500 g basis, 0.221564573… US fl oz, and 6.552446464… mL.
+4. Changing Vybar changes the fragrance basis; changing dye mass does not.
+5. Missing, zero, negative, exponent-form, or unit-suffixed ratio input fails visibly.
+6. The production plan labels the ratio US fl oz/lb and displays mL plus US fl oz as volume targets.
+7. When fragrance is enabled, fragrance mass and exact finished-formulation mass are `null` rather than estimated.
 
 ### 23.6 Actual batch and traceability tests
 
@@ -1346,11 +1400,13 @@ All tests in the applicable release gate are mandatory. Numeric comparisons use 
 
 - [ ] All 16 dyes and six formula templates exist in immutable seed data.
 - [ ] Source evidence is recorded and visibly marked verified or unverified.
+- [ ] The UI identifies Freedom Pillar Wax and American Soy Organics separately and exposes only Regular 0.50%, Medium 0.45%, and Light 0.40% pillar color-strength presets.
 - [ ] Manufacturer dye-temperature and mixing guidance appears beside the calculator and in the printable production plan without being presented as a universal wax melting point.
 - [ ] Fixed and constrained formulas resolve deterministically.
 - [ ] Decimal mass arithmetic follows Section 6.5.
 - [ ] Every dye component is calculated and displayed as direct dye only.
 - [ ] Mathematical target, displayable target, and finished formulation mass are distinct.
+- [ ] Fragrance volume uses the entered US fl oz/lb ratio and wax + Vybar basis, while fragrance mass and exact finished mass remain unavailable without density.
 - [ ] Scale readability, capacity, minimum load, accuracy, and repeatability behavior follows Section 10.
 - [ ] Diagnostics contain code, severity, field path, and message.
 - [ ] No screen or photo input is represented as a calibrated physical-color formula.
@@ -1395,7 +1451,7 @@ These inputs do not block coding Release 1.0, but recipes shall remain `testing`
 - typical base-wax batch mass in grams;
 - scale model, readability, capacity, minimum load, accuracy, and repeatability checks;
 - exact Vybar load and basis;
-- fragrance presence, identity, and load;
+- fragrance identity and bottle ratio interpreted in US fl oz/lb;
 - standard melt, addition, mix, pour, and cooling process;
 - standard cure evaluation interval;
 - approved sample geometry and backing;
@@ -1423,6 +1479,8 @@ Null placeholders shall never silently become production defaults.
 - **D-015:** Release 1 visual targets may derive a bounded screen-space ratio variation inside the nearest predefined family, but may not introduce dyes, mutate seed ratios, change total dye load, or claim a calibrated physical-color match.
 - **D-016:** Selected screen colors use the nearest W3C CSS named sRGB color as a readable reference; this name remains separate from the wax-family match and exact selected HEX.
 - **D-017:** Release 1 repeats the transcribed manufacturer dye-temperature and mixing instructions in the calculator and production plan, preserving the unverified-source label and separating dye-dissolving guidance from wax-specific melting requirements.
+- **D-018:** At the operator’s direction, the fragrance bottle’s `1 oz/lb` instruction is interpreted as `1 US fl oz/lb`. Release 1 calculates mL from base wax + Vybar using exact US unit conversions, requests no density, and does not claim fragrance mass or exact finished-formulation mass.
+- **D-019:** Release 1 constrains pillar color strength to Regular 0.50%, Medium 0.45%, and Light 0.40%, defaulting to Regular. The percentages are relative dye-dose levels, not claims of linear visual intensity, and remain subject to physical color and burn testing.
 
 ## 27. Glossary
 

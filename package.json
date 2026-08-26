@@ -1,6 +1,6 @@
 {
   "name": "candle-color-mixer",
-  "version": "1.0.5",
+  "version": "1.0.9",
   "private": true,
   "type": "module",
   "scripts": {

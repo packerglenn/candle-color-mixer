@@ -1,6 +1,7 @@
 import { BASE_WAX, DYE_BY_ID, MANUFACTURER_GUIDANCE, VYBAR } from "../data/seed.js";
 import { ExactDecimal } from "./decimal.js";
 import { DomainError, diagnostic } from "./errors.js";
+import { calculateFragranceDose } from "./fragrance.js";
 import { validateFixedComponents } from "./formula-engine.js";
 import { evaluateScale, parseScaleProfile } from "./scale-engine.js";
 
@@ -76,7 +77,7 @@ export function calculateWeighingPlan(input) {
     diagnostics.push(diagnostic(
       "DYE_LOAD_OUTSIDE_GUIDANCE",
       "warning",
-      `Dye load is outside the transcribed soy-wax guidance of ${guidanceMinimum.toFixed(3)}–${guidanceMaximum.toFixed(3)}%.`,
+      `Dye load is outside the transcribed solid-dye guidance of ${guidanceMinimum.toFixed(3)}–${guidanceMaximum.toFixed(3)}%.`,
       "dyeLoadPct",
     ));
   }
@@ -115,19 +116,17 @@ export function calculateWeighingPlan(input) {
     : null;
   if (additiveScale) diagnostics.push(...additiveScale.diagnostics);
 
-  const fragranceLoadPct = input.fragrance?.enabled
-    ? parseNonNegative(input.fragrance.loadPct, "fragrance.loadPct")
-    : ExactDecimal.ZERO;
-  const fragranceTarget = baseWax.multiply(fragranceLoadPct).divide(ExactDecimal.ONE_HUNDRED);
-  const fragranceScale = input.fragrance?.enabled
-    ? evaluateScale(fragranceTarget, dyeScale, "fragrance.loadPct")
+  const fragranceBasis = baseWax.add(additiveTarget);
+  const fragranceDose = input.fragrance?.enabled
+    ? calculateFragranceDose({
+        basisG: canonical(fragranceBasis),
+        ratioFlOzPerLb: input.fragrance.ratioFlOzPerLb,
+      })
     : null;
-  if (fragranceScale) diagnostics.push(...fragranceScale.diagnostics);
 
-  const finishedMass = baseWax
+  const knownFormulationMass = baseWax
     .add(pureDyeTotal)
-    .add(additiveTarget)
-    .add(fragranceTarget);
+    .add(additiveTarget);
 
   return Object.freeze({
     baseWax: {
@@ -152,13 +151,12 @@ export function calculateWeighingPlan(input) {
     fragrance: input.fragrance?.enabled
       ? {
           name: input.fragrance.name || "Fragrance",
-          loadPct: canonical(fragranceLoadPct),
-          targetG: canonical(fragranceTarget),
-          scale: serializeScaleResult(fragranceScale),
+          ...fragranceDose,
         }
       : null,
     visualTarget: input.visualTarget ? Object.freeze({ ...input.visualTarget }) : null,
-    finishedFormulationTargetG: canonical(finishedMass),
+    knownFormulationMassBeforeFragranceG: canonical(knownFormulationMass),
+    finishedFormulationTargetG: fragranceDose ? null : canonical(knownFormulationMass),
     diagnostics,
   });
 }

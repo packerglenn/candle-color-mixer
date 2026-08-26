@@ -11,6 +11,7 @@ function deepFreeze(value) {
 export const SOURCE_EVIDENCE = deepFreeze({ ...seed.sourceEvidence });
 export const BASE_WAX = deepFreeze({ ...seed.baseWax });
 export const VYBAR = deepFreeze({ ...seed.additive });
+export const APPLICATION_PRESETS = deepFreeze({ ...seed.applicationPresets });
 
 export const DYES = Object.freeze(seed.dyes.map((dye) => Object.freeze({
   id: `candle-shop-${dye.slug}`,

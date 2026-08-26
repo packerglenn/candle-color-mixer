@@ -1,4 +1,4 @@
-const CACHE_NAME = "candle-color-mixer-v1.0.7";
+const CACHE_NAME = "candle-color-mixer-v1.0.11";
 const APP_ROOT = new URL("./", self.location.href);
 const ASSETS = [
   "./",
@@ -15,6 +15,7 @@ const ASSETS = [
   "./src/domain/decimal.js",
   "./src/domain/errors.js",
   "./src/domain/formula-engine.js",
+  "./src/domain/fragrance.js",
   "./src/domain/process-guidance.js",
   "./src/domain/scale-engine.js",
   "./src/domain/screen-color-name.js",

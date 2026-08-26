@@ -9,6 +9,8 @@ test("HTML assets remain relative for GitHub Pages project sites", () => {
   assert.doesNotMatch(html, /(?:href|src)="\/(?!\/)/);
   assert.match(html, /href="\.\/styles\.css"/);
   assert.match(html, /src="\.\/src\/app\.js"/);
+  assert.match(html, /id="dye-load"[^>]+type="hidden"[^>]+value="0\.50"/);
+  assert.doesNotMatch(html, /Transcribed soy guidance/);
 });
 
 test("the web manifest is scoped to its deployment directory", () => {
@@ -21,6 +23,7 @@ test("the web manifest is scoped to its deployment directory", () => {
 test("the service worker derives cached URLs from its own Pages scope", () => {
   const worker = read("sw.js");
   assert.match(worker, /const APP_ROOT = new URL\("\.\/", self\.location\.href\)/);
+  assert.match(worker, /"\.\/src\/domain\/fragrance\.js"/);
   assert.doesNotMatch(worker, /^\s*"\//m);
 });
 
