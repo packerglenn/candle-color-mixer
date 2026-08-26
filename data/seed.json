@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 3,
+  "sourceEvidence": {
+    "id": "booklet-transcription-001",
+    "verificationStatus": "unverified_transcription",
+    "transcriptionDate": "2026-08-26",
+    "notes": "Requires second-person comparison with the original manufacturer booklet."
+  },
+  "baseWax": {
+    "id": "aso-freedom-pillar-wax",
+    "displayName": "Freedom Pillar Wax",
+    "manufacturer": "American Soy Organics"
+  },
+  "additive": {
+    "id": "vybar-103-pb165",
+    "displayName": "Vybar 103 / PB 165"
+  },
+  "dyeSystem": {
+    "id": "candle-shop-16-color-kit",
+    "displayName": "Candle Shop 16-color kit"
+  },
+  "dyes": [
+    { "slug": "white", "displayName": "White" },
+    { "slug": "red", "displayName": "Red" },
+    { "slug": "yellow", "displayName": "Yellow" },
+    { "slug": "blue", "displayName": "Blue" },
+    { "slug": "green", "displayName": "Green" },
+    { "slug": "dark-blue", "displayName": "Dark blue" },
+    { "slug": "brown", "displayName": "Brown" },
+    { "slug": "orange", "displayName": "Orange" },
+    { "slug": "violet", "displayName": "Violet" },
+    { "slug": "purple", "displayName": "Purple" },
+    { "slug": "aquamarine", "displayName": "Aquamarine" },
+    { "slug": "pink", "displayName": "Pink" },
+    { "slug": "bright-yellow", "displayName": "Bright yellow" },
+    { "slug": "bright-lime", "displayName": "Bright lime" },
+    { "slug": "bright-pink", "displayName": "Bright pink" },
+    { "slug": "black", "displayName": "Black" }
+  ],
+  "formulaTemplates": [
+    {
+      "id": "manufacturer-raspberry",
+      "displayName": "Raspberry",
+      "screenAnchorHex": "#b63d69",
+      "visualAdjustmentModel": {
+        "kind": "two_color_plus_tint",
+        "primaryDyeId": "candle-shop-red",
+        "secondaryDyeId": "candle-shop-blue",
+        "tintDyeId": "candle-shop-white",
+        "hueDirection": 1,
+        "hueShiftPerDegree": "0.0035",
+        "minimumPrimaryShare": "0.35",
+        "maximumPrimaryShare": "0.90",
+        "desaturationToTint": "0.35",
+        "brightnessToTint": "0.18",
+        "minimumTintRatio": "0.02",
+        "maximumTintRatio": "0.35"
+      },
+      "kind": "fixed",
+      "components": [
+        { "dyeId": "candle-shop-red", "ratio": "0.70" },
+        { "dyeId": "candle-shop-blue", "ratio": "0.25" },
+        { "dyeId": "candle-shop-white", "ratio": "0.05" }
+      ]
+    },
+    {
+      "id": "manufacturer-coral",
+      "displayName": "Coral",
+      "screenAnchorHex": "#df7869",
+      "visualAdjustmentModel": {
+        "kind": "two_color_plus_tint",
+        "primaryDyeId": "candle-shop-red",
+        "secondaryDyeId": "candle-shop-yellow",
+        "tintDyeId": "candle-shop-white",
+        "hueDirection": -1,
+        "hueShiftPerDegree": "0.004",
+        "minimumPrimaryShare": "0.25",
+        "maximumPrimaryShare": "0.85",
+        "desaturationToTint": "0.35",
+        "brightnessToTint": "0.18",
+        "minimumTintRatio": "0.05",
+        "maximumTintRatio": "0.40"
+      },
+      "kind": "fixed",
+      "components": [
+        { "dyeId": "candle-shop-red", "ratio": "0.50" },
+        { "dyeId": "candle-shop-yellow", "ratio": "0.35" },
+        { "dyeId": "candle-shop-white", "ratio": "0.15" }
+      ]
+    },
+    {
+      "id": "manufacturer-turquoise",
+      "displayName": "Turquoise",
+      "screenAnchorHex": "#47a9a0",
+      "visualAdjustmentModel": {
+        "kind": "two_color_plus_tint",
+        "primaryDyeId": "candle-shop-green",
+        "secondaryDyeId": "candle-shop-blue",
+        "tintDyeId": "candle-shop-white",
+        "hueDirection": -1,
+        "hueShiftPerDegree": "0.004",
+        "minimumPrimaryShare": "0.45",
+        "maximumPrimaryShare": "0.95",
+        "desaturationToTint": "0.35",
+        "brightnessToTint": "0.18",
+        "minimumTintRatio": "0.02",
+        "maximumTintRatio": "0.30"
+      },
+      "kind": "bounded_complement",
+      "variableDyeId": "candle-shop-green",
+      "variableMinRatio": "0.80",
+      "variableMaxRatio": "0.85",
+      "derivedDyeId": "candle-shop-blue",
+      "complementTotalRatio": "0.95",
+      "fixedComponents": [{ "dyeId": "candle-shop-white", "ratio": "0.05" }]
+    },
+    {
+      "id": "manufacturer-lime",
+      "displayName": "Lime",
+      "screenAnchorHex": "#a7bd45",
+      "visualAdjustmentModel": {
+        "kind": "two_color_plus_tint",
+        "primaryDyeId": "candle-shop-green",
+        "secondaryDyeId": "candle-shop-bright-yellow",
+        "tintDyeId": "candle-shop-white",
+        "hueDirection": 1,
+        "hueShiftPerDegree": "0.004",
+        "minimumPrimaryShare": "0.05",
+        "maximumPrimaryShare": "0.75",
+        "desaturationToTint": "0.35",
+        "brightnessToTint": "0.18",
+        "minimumTintRatio": "0.02",
+        "maximumTintRatio": "0.30"
+      },
+      "kind": "fixed",
+      "components": [
+        { "dyeId": "candle-shop-green", "ratio": "0.25" },
+        { "dyeId": "candle-shop-bright-yellow", "ratio": "0.70" },
+        { "dyeId": "candle-shop-white", "ratio": "0.05" }
+      ]
+    },
+    {
+      "id": "manufacturer-olive",
+      "displayName": "Olive",
+      "screenAnchorHex": "#7b803d",
+      "visualAdjustmentModel": {
+        "kind": "two_color",
+        "primaryDyeId": "candle-shop-green",
+        "secondaryDyeId": "candle-shop-yellow",
+        "hueDirection": 1,
+        "hueShiftPerDegree": "0.004",
+        "minimumPrimaryRatio": "0.35",
+        "maximumPrimaryRatio": "0.98"
+      },
+      "kind": "bounded_complement",
+      "variableDyeId": "candle-shop-green",
+      "variableMinRatio": "0.80",
+      "variableMaxRatio": "0.90",
+      "derivedDyeId": "candle-shop-yellow",
+      "complementTotalRatio": "1.00",
+      "fixedComponents": []
+    },
+    {
+      "id": "manufacturer-gray-coal",
+      "displayName": "Gray coal",
+      "screenAnchorHex": "#555c5a",
+      "visualAdjustmentModel": {
+        "kind": "neutral_value",
+        "lightDyeId": "candle-shop-white",
+        "darkDyeId": "candle-shop-black",
+        "darkeningPerValue": "0.35",
+        "minimumDarkRatio": "0.02",
+        "maximumDarkRatio": "0.25"
+      },
+      "kind": "bounded_complement",
+      "variableDyeId": "candle-shop-white",
+      "variableMinRatio": "0.93",
+      "variableMaxRatio": "0.95",
+      "derivedDyeId": "candle-shop-black",
+      "complementTotalRatio": "1.00",
+      "fixedComponents": []
+    }
+  ],
+  "manufacturerGuidance": {
+    "minimumDyeLoadPct": "0.227272727272727272727273",
+    "maximumDyeLoadPct": "0.568181818181818181818182",
+    "waxFullyMeltedBeforeDye": true,
+    "minimumDyeDissolveTemperatureF": "152",
+    "maximumRecommendedDyeTemperatureF": "194",
+    "minimumMixSeconds": "60",
+    "maximumMixSeconds": "120",
+    "mixUntilCompletelyDissolved": true
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "candle-color-mixer",
+  "version": "1.0.5",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "start:pages": "node scripts/serve.mjs --base=/candle-color-mixer/ --port=4174",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

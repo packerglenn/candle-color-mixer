@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#173c3a">
+    <meta
+      name="description"
+      content="Exact mass-based candle wax color formula calculator for Pinewood Blooms."
+    >
+    <title>Candle Color Mixer</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#calculator">Skip to calculator</a>
+
+    <header class="site-header">
+      <a class="brand" href="#" aria-label="Candle Color Mixer home">
+        <span class="brand-mark" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </span>
+        <span>
+          <strong>Candle Color Mixer</strong>
+          <small>Pinewood Blooms</small>
+        </span>
+      </a>
+      <span class="release-badge">Exact calculator · v1.0</span>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Repeatable color starts with repeatable mass</p>
+          <h1 id="page-title">Turn a dye ratio into a precise weighing plan.</h1>
+          <p class="hero-copy">
+            Scale manufacturer formulas to your batch, calculate each direct-dye amount,
+            and see exactly what your scales can—and cannot—measure.
+          </p>
+        </div>
+        <div class="hero-card" aria-label="How Version 1 works">
+          <div><span>01</span><strong>Choose a formula</strong></div>
+          <div><span>02</span><strong>Set batch and dye load</strong></div>
+          <div><span>03</span><strong>Follow the weighing plan</strong></div>
+        </div>
+      </section>
+
+      <section class="workspace" id="calculator">
+        <form class="calculator-panel" id="calculator-form" novalidate>
+          <div class="panel-heading">
+            <div>
+              <p class="step-label">Formula setup</p>
+              <h2>Calculate formula</h2>
+            </div>
+            <button class="text-button" type="button" id="reset-button">Reset</button>
+          </div>
+
+          <div class="form-section">
+            <div class="target-mode-switch" role="group" aria-label="Formula selection method">
+              <button type="button" id="mode-formula" class="active" aria-pressed="true">Predefined formula</button>
+              <button type="button" id="mode-wheel" aria-pressed="false">Color wheel</button>
+            </div>
+
+            <div class="color-wheel-panel" id="color-wheel-panel" hidden>
+              <div class="wheel-layout">
+                <div class="wheel-stage" aria-hidden="true">
+                  <canvas id="color-wheel" width="280" height="280"></canvas>
+                  <span class="wheel-marker" id="wheel-marker"></span>
+                </div>
+                <div class="wheel-controls">
+                  <div class="selected-color">
+                    <span class="selected-swatch" id="selected-swatch"></span>
+                    <div><small>Selected screen color</small><strong id="selected-hex-label">#b63d69</strong></div>
+                  </div>
+                  <label class="field">
+                    <span>System color picker</span>
+                    <input type="color" id="native-color" value="#b63d69">
+                  </label>
+                  <label class="field">
+                    <span>HEX reference</span>
+                    <input id="target-hex" value="#b63d69" maxlength="7" spellcheck="false">
+                  </label>
+                  <label class="field brightness-field">
+                    <span>Brightness <b id="brightness-value">71%</b></span>
+                    <input type="range" id="brightness" min="20" max="100" step="1" value="71">
+                  </label>
+                  <div class="screen-name" id="screen-color-name"></div>
+                  <div class="screen-match" id="screen-match"></div>
+                </div>
+              </div>
+              <p class="experimental-note"><strong>Experimental visual mapping:</strong> the selected screen color chooses the nearest predefined family, then applies bounded ratio adjustments to that family’s existing dyes. This is not a calibrated cured-wax match; dye load remains your manual setting.</p>
+            </div>
+
+            <label class="field field-wide" id="formula-field">
+              <span id="formula-label">Formula</span>
+              <select id="template-select" name="templateId"></select>
+              <small>Manufacturer ratios are starting templates, not verified physical colors.</small>
+            </label>
+
+            <div id="range-editor" class="range-editor" hidden></div>
+            <div id="fixed-formula" class="formula-preview"></div>
+            <div id="custom-editor" class="custom-editor" hidden>
+              <div class="custom-heading">
+                <span>Custom dye ratios</span>
+                <button class="small-button" type="button" id="add-component">Add dye</button>
+              </div>
+              <div id="custom-rows"></div>
+              <p class="ratio-total" id="ratio-total">Total: 0%</p>
+            </div>
+          </div>
+
+          <div class="form-section two-column">
+            <label class="field">
+              <span>Base wax target</span>
+              <span class="input-with-unit">
+                <input id="base-wax" name="baseWaxTargetG" inputmode="decimal" value="100.000" required>
+                <b>g</b>
+              </span>
+              <small>The mass basis used to calculate the pure dye load.</small>
+            </label>
+            <label class="field">
+              <span>Pure dye load</span>
+              <span class="input-with-unit">
+                <input id="dye-load" name="dyeLoadPct" inputmode="decimal" value="0.30" required>
+                <b>%</b>
+              </span>
+              <small>Transcribed soy guidance: approximately 0.227–0.568%.</small>
+            </label>
+          </div>
+
+          <aside class="form-section process-guidance" id="process-guidance" aria-label="Dye temperature and mixing guidance"></aside>
+
+          <div class="form-section optional-section">
+            <label class="check-row">
+              <input type="checkbox" id="additive-enabled">
+              <span>
+                <strong>Include Vybar 103 / PB 165</strong>
+                <small>No production dose is assumed.</small>
+              </span>
+            </label>
+            <div class="optional-fields" id="additive-fields" hidden>
+              <label class="field">
+                <span>Vybar load</span>
+                <span class="input-with-unit">
+                  <input id="additive-load" inputmode="decimal" placeholder="Required">
+                  <b>%</b>
+                </span>
+              </label>
+            </div>
+
+            <label class="check-row">
+              <input type="checkbox" id="fragrance-enabled">
+              <span>
+                <strong>Include fragrance</strong>
+                <small>Fragrance can affect the finished color.</small>
+              </span>
+            </label>
+            <div class="optional-fields two-column" id="fragrance-fields" hidden>
+              <label class="field">
+                <span>Fragrance name</span>
+                <input id="fragrance-name" placeholder="e.g. Garden rose">
+              </label>
+              <label class="field">
+                <span>Fragrance load</span>
+                <span class="input-with-unit">
+                  <input id="fragrance-load" inputmode="decimal" placeholder="Required">
+                  <b>%</b>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <details class="scale-settings">
+            <summary>
+              <span>
+                <strong>Scale settings</strong>
+                <small>Wax scale and precision scale</small>
+              </span>
+              <span class="summary-action">Edit</span>
+            </summary>
+            <div class="scale-grid">
+              <fieldset>
+                <legend>Wax scale</legend>
+                <div class="two-column compact-grid">
+                  <label class="field"><span>Readability (g)</span><input id="wax-readability" value="0.1" inputmode="decimal"></label>
+                  <label class="field"><span>Capacity (g)</span><input id="wax-capacity" value="5000" inputmode="decimal"></label>
+                  <label class="field"><span>Minimum load (g)</span><input id="wax-minimum" placeholder="Unknown" inputmode="decimal"></label>
+                  <label class="field"><span>Repeatability (g)</span><input id="wax-repeatability" placeholder="Unverified" inputmode="decimal"></label>
+                  <label class="field"><span>Accuracy (g)</span><input id="wax-accuracy" placeholder="Unverified" inputmode="decimal"></label>
+                </div>
+              </fieldset>
+              <fieldset>
+                <legend>Precision scale</legend>
+                <div class="two-column compact-grid">
+                  <label class="field"><span>Readability (g)</span><input id="dye-readability" value="0.001" inputmode="decimal"></label>
+                  <label class="field"><span>Capacity (g)</span><input id="dye-capacity" value="50" inputmode="decimal"></label>
+                  <label class="field"><span>Minimum load (g)</span><input id="dye-minimum" placeholder="Unknown" inputmode="decimal"></label>
+                  <label class="field"><span>Repeatability (g)</span><input id="dye-repeatability" placeholder="Unverified" inputmode="decimal"></label>
+                  <label class="field"><span>Accuracy (g)</span><input id="dye-accuracy" placeholder="Unverified" inputmode="decimal"></label>
+                </div>
+              </fieldset>
+            </div>
+          </details>
+
+          <div class="form-error" id="form-error" role="alert" hidden></div>
+          <button class="primary-button" type="submit">
+            Calculate weighing plan
+            <span aria-hidden="true">→</span>
+          </button>
+        </form>
+
+        <section class="results-panel" id="results-panel" aria-live="polite">
+          <div class="empty-state" id="empty-state">
+            <div class="wax-bloom" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><i></i>
+            </div>
+            <p class="eyebrow">Your plan will appear here</p>
+            <h2>Ready when your formula is.</h2>
+            <p>We keep the mathematical target separate from what your scale can display.</p>
+          </div>
+          <div id="results" hidden></div>
+        </section>
+      </section>
+    </main>
+
+    <footer>
+      <p>Exact mass calculation · Bounded experimental color-family adjustments</p>
+      <a href="./SPECIFICATION.md">Read the specification</a>
+    </footer>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>

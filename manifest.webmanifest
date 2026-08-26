@@ -1,0 +1,18 @@
+{
+  "name": "Candle Color Mixer",
+  "short_name": "Color Mixer",
+  "description": "Exact mass-based candle wax color formula calculator.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f1e8",
+  "theme_color": "#173c3a",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
