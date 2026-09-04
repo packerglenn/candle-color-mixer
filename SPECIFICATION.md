@@ -1,9 +1,9 @@
-# Candle Color Mixer — Product and Engineering Specification
+# Wax Color Studio — Product and Engineering Specification
 
 - **Repository:** `packerglenn/candle-color-mixer`
-- **Status:** Approved for Version 1 implementation
-- **Specification version:** 0.5.5
-- **Date:** 2026-08-26
+- **Status:** Version 2.1 implementation baseline
+- **Specification version:** 0.6.0
+- **Date:** 2026-09-03
 - **Primary use:** Pinewood Blooms small-batch wax color formulation
 - **Initial delivery:** Static-first web application / installable PWA
 
@@ -11,7 +11,7 @@
 
 ## 1. Purpose
 
-The Candle Color Mixer shall make wax-color production repeatable by answering two distinct questions:
+The Wax Color Studio shall make decorative wax-color production repeatable by answering two distinct questions:
 
 1. **Calculation:** Given a fixed dye formula, wax formulation, and base-wax mass, what masses must the operator weigh?
 2. **Recommendation:** Given a target color, what previously tested formula is the best empirical starting point?
@@ -19,6 +19,12 @@ The Candle Color Mixer shall make wax-color production repeatable by answering t
 Calculation is deterministic and may be exact within the declared numeric model. Color recommendation is empirical and shall expose uncertainty. The application shall never claim that an uncalibrated screen color mathematically determines a physical wax mixture.
 
 The specification uses **shall** for a requirement, **should** for a strong recommendation, and **may** for an optional behavior.
+
+### 1.1 Current product boundary
+
+This application is for molded decorative wax pieces that are displayed on sticks and are not intended to be lit or burned. This boundary supersedes legacy references in this document to burning candles, wick behavior, and burn-test acceptance.
+
+The streamlined UI requires a wax type before applying dye dosage. Paraffin uses the photographed **0.07–0.10 oz per 2.2 lb** range; soy, beeswax, and palm use **0.08–0.20 oz per 2.2 lb**. Each range exposes Low, calculated Midpoint, and High choices. Paraffin and High are the defaults. These values shall not be described as scientifically verified compensation for wax whiteness or opacity. Physical sample approval shall include complete dissolution, cured appearance, surface quality, brittleness, and color transfer or staining.
 
 ## 2. Product boundary and release definitions
 
@@ -33,10 +39,10 @@ Release 1.0 shall provide:
 - nearest W3C CSS named-color reference for the selected sRGB screen color;
 - custom fixed-ratio formula entry;
 - constrained selection within manufacturer ratio ranges;
-- Freedom Pillar Wax batch-mass entry and a constrained three-level color-strength selector;
+- paraffin-wax batch-mass entry and a constrained three-level kit-based color-strength selector;
 - exact component-mass calculation;
 - direct-dye component calculation only;
-- scale feasibility and representability warnings;
+- scale feasibility and representability checks in the calculation engine;
 - visible manufacturer dye-temperature and mixing guidance;
 - fragrance-oil volume calculation from an operator-entered US fl oz/lb ratio;
 - a complete production weighing plan;
@@ -100,9 +106,9 @@ The following are outside Release 1.0 and are not implied by later architecture:
 - inventory purchasing;
 - fragrance formulation optimization;
 - printer or production-machine control;
-- burn-safety certification.
+- product safety certification.
 
-Manufacturer dosage compliance shall never be labeled as candle or burn safety approval. Any product intended to burn requires the maker’s applicable safety and burn-testing process outside this application.
+Manufacturer dosage guidance shall be tied to its selected wax type. The photographed ranges support the current presets but are not proof that a selected screen color will match cured wax. Products intended to burn are outside this application’s scope.
 
 ## 5. Source materials and provenance
 
@@ -129,14 +135,16 @@ The initial dye system is the Candle Shop 16-color solid candle dye kit:
 
 Stable IDs shall be used, such as `candle-shop-red`. Display names are not identifiers.
 
-### 5.2 Known base wax
+### 5.2 Supported wax types
 
-- Manufacturer: American Soy Organics
-- Product: Freedom Pillar Wax
-- Initial ID: `aso-freedom-pillar-wax`
-- Release 1 application: molded pillar candles
+- Paraffin wax (`paraffin-wax`) — default
+- Soy wax (`soy-wax`)
+- Beeswax (`beeswax`)
+- Palm wax (`palm-wax`)
+- Product and manufacturer: entered by the operator when known
+- Current application: decorative molded wax display pieces placed on sticks
 
-Release 1 shall display the product and manufacturer names separately and shall use “pillar” as the application preset. It shall not derive the wax identity from the manufacturer’s company name.
+The application shall store the selected wax type with each recipe and calculation snapshot and shall use `decorative_molded_wax` as the application preset.
 
 ### 5.3 Known additive
 
@@ -174,7 +182,7 @@ low  = 0.07 / 35.2 × 100 = 0.1988636…%
 high = 0.10 / 35.2 × 100 = 0.2840909…%
 ```
 
-These values are guidance, not guarantees. A `SourceEvidence` record shall retain the source type, image or document reference, transcription date, transcriber, and verification status. Seed data shall remain `unverified_transcription` until a second person checks it against the source material.
+These values are guidance, not guarantees. A `SourceEvidence` record shall retain the source type, image or document reference, transcription date, transcriber, and verification status. The paraffin dosage was checked against a user-provided photo of the kit instructions on 2026-09-04. Other starter ratios and process guidance retain their own verification state.
 
 Release 1.0 shall show this process guidance beside the calculator inputs and repeat it in the production plan. The operator-facing sequence shall say to add dye only after the wax is fully melted, dissolve at no less than approximately 152°F / 66.7°C, avoid heating the dye above approximately 194°F / 90°C, and mix for approximately 1–2 minutes until completely dissolved. The UI shall identify these values as an unverified manufacturer transcription, shall not mislabel 152°F as the melting point of every supported wax, and shall remind the operator to follow the selected wax manufacturer’s and equipment manufacturer’s safety instructions.
 
@@ -271,15 +279,14 @@ A `FormulaTemplate` represents source guidance. It contains a dye system and fix
 - a verified production status;
 - a silently selected dye load.
 
-Release 1 shall provide only these three explicitly labeled pillar color-strength presets:
+The streamlined UI shall provide Low, calculated Midpoint, and High choices for the selected wax:
 
-| UI label | Relative dye amount | Pure dye load |
-|---|---:|---:|
-| Regular | 100% | 0.50% of base wax |
-| Medium | 90% | 0.45% of base wax |
-| Light | 80% | 0.40% of base wax |
+| Wax type | Low | Midpoint | High |
+|---|---:|---:|---:|
+| Paraffin | 0.07 oz / 2.2 lb | 0.085 oz / 2.2 lb | 0.10 oz / 2.2 lb |
+| Soy, beeswax, or palm | 0.08 oz / 2.2 lb | 0.14 oz / 2.2 lb | 0.20 oz / 2.2 lb |
 
-Regular shall be the default. “Relative dye amount” describes linear dosage relative to the 0.50% Regular preset; it shall not be presented as a linear prediction of perceived or cured color intensity. All three loads remain below the transcribed solid-dye maximum of approximately `0.568%`. They are engineering starting points, not calibrated production values or burn-safety approvals.
+High shall be the default. Midpoint is an application-calculated arithmetic midpoint between the printed endpoints, not a separately printed manufacturer recommendation. The levels shall not be presented as linear predictions of perceived or cured color intensity. They require physical approval before production use.
 
 ### 7.2 Recipe and recipe version
 
@@ -347,7 +354,7 @@ No value from one dimension shall be stored in another.
 | Template | Components |
 |---|---|
 | Raspberry | Red 70%, Blue 25%, White 5% |
-| Coral | Red 50%, Yellow 35%, White 15% |
+| Coral | Red 50%, Yellow 41%, White 9% |
 | Turquoise | Green 80–85%, Blue = 95% − Green, White 5% |
 | Lime | Green 25%, Bright yellow 70%, White 5% |
 | Olive | Green 80–90%, Yellow = 100% − Green |
@@ -573,23 +580,23 @@ The same canonical input and reference-data versions shall produce byte-equivale
 
 ### 12.1 Raspberry, direct dye
 
-For 100.000 g Freedom Pillar Wax at the default Regular 0.50% pillar dye preset:
+For 100.000 g paraffin wax at the default High kit rate of 0.10 oz dye per 2.2 lb wax:
 
 ```text
-total dye = 100 × 0.005 = 0.500 g
-red        = 0.500 × 0.70 = 0.350 g
-blue       = 0.500 × 0.25 = 0.125 g
-white      = 0.500 × 0.05 = 0.025 g
-finished mass before additives/fragrance = 100.500 g
+total dye = 100 × 0.002840909… = 0.2840909… g
+red        = 0.2840909… × 0.70 = 0.1988636… g
+blue       = 0.2840909… × 0.25 = 0.0710227… g
+white      = 0.2840909… × 0.05 = 0.0142045… g
+finished mass before additives/fragrance = 100.2840909… g
 ```
 
 At 250.000 g base wax:
 
 ```text
-total dye = 1.2500 g
-red       = 0.8750 g
-blue      = 0.3125 g
-white     = 0.0625 g
+total dye = 0.7102272… g
+red       = 0.4971590… g
+blue      = 0.1775568… g
+white     = 0.0355113… g
 ```
 
 ### 12.2 Scale example
@@ -615,7 +622,7 @@ fragrance fl oz  = 0.221564573… × 1 = 0.221564573… US fl oz
 fragrance volume = 0.221564573… × 29.5735295625 = 6.552446464… mL
 ```
 
-The production target is the calculated mL value. Known mass before fragrance is 101.000 g when the 0.500 g dye from Section 12.1 is included; exact finished mass remains unavailable without density.
+The production target is the calculated mL value. Known mass before fragrance is 100.7840909… g when the 0.2840909… g dye from Section 12.1 is included; exact finished mass remains unavailable without density.
 
 ## 13. Color science boundary
 
@@ -725,7 +732,7 @@ Calibration shall be staged:
 4. Replicate independent batches for recipes intended to receive high confidence.
 5. Ongoing production observations.
 
-Exploratory loads of 0.24% and 0.35% remain useful comparison samples outside the streamlined UI. Release 1 exposes Regular 0.50%, Medium 0.45%, and Light 0.40% to avoid unnecessarily pale starting samples while allowing controlled strength reduction. These presets remain within the transcribed solid-dye range applicable to the manufacturer-described wax composition, but none is a verified Pinewood Blooms production standard until physical samples and burn tests are approved.
+Exploratory lower loads remain useful comparison samples. The current product exposes the photographed Low and High endpoints plus a clearly labeled calculated Midpoint for the selected wax. None is a verified Pinewood Blooms production standard until controlled physical samples pass appearance and material-quality checks.
 
 ### 14.4 Observation rules
 
@@ -999,7 +1006,7 @@ Examples below are normative for field meaning and numeric representation. Forma
   "formulationProfileRef": { "id": "pb-freedom-vybar", "version": 1 },
   "targetColorRef": null,
   "baseWax": {
-    "materialRef": { "id": "aso-freedom-pillar-wax", "version": 1 },
+    "materialRef": { "id": "paraffin-wax", "version": 1 },
     "lotId": "wax-lot-2026-04",
     "targetG": "100.000",
     "actualG": "100.001",
@@ -1184,7 +1191,7 @@ Severity may be increased by policy but shall not be reduced without a specifica
 3. Enter base-wax target and dye load.
 4. Select the scale used for each weighing; wax and dye may use different scales.
 5. Review mathematical and displayable targets.
-6. Resolve hard errors and acknowledge applicable warnings.
+6. Resolve hard errors. Non-blocking diagnostics remain available to the calculation engine but are not rendered on the streamlined Color Plan page.
 7. Use the production weighing plan.
 
 Release 1.0 shall not label this operation “Create Color.” The screen name is **Calculate Formula**.
@@ -1293,16 +1300,17 @@ All tests in the applicable release gate are mandatory. Numeric comparisons use 
 
 ### 23.2 Fixed-formula tests
 
-1. Raspberry at Regular with 100 g and 0.50% returns 0.500 g total and 0.350/0.125/0.025 g components.
-2. Raspberry at Regular with 250 g returns 1.2500 g total and 0.8750/0.3125/0.0625 g components.
-3. At 100 g, Regular/Medium/Light return exactly 0.500/0.450/0.400 g total pure dye while preserving component ratios.
-4. Scaling 100 → 250 → 100 uses ratios and canonical inputs, returning the original result.
-5. Coral, Lime, Olive midpoint, Turquoise midpoint, and Gray coal midpoint match Section 8 and the original worked values.
-6. Ratios totaling 0.999 or 1.001 fail; no silent normalization occurs.
-7. A negative ratio, ratio over 1, duplicate dye, or missing dye reference fails.
-8. Zero dye load returns zero component masses and `not_applicable` scale percentages without division by zero.
-9. Inputs containing `NaN`, infinity, exponent notation, commas, or embedded units fail.
-10. Repeating the same calculation 1,000 times produces identical canonical result JSON.
+1. Raspberry with 100 g paraffin at High returns 0.2840909… g total and 0.1988636…/0.0710227…/0.0142045… g components.
+2. Raspberry with 250 g paraffin at High returns 0.7102272… g total and 0.4971590…/0.1775568…/0.0355113… g components.
+3. At 100 g paraffin, High/Midpoint/Low return exactly 0.2840909…/0.2414772…/0.1988636… g total pure dye while preserving component ratios.
+4. At 100 g soy, beeswax, or palm wax, High/Midpoint/Low return exactly 0.5681818…/0.3977272…/0.2272727… g total pure dye.
+5. Scaling 100 → 250 → 100 uses ratios and canonical inputs, returning the original result.
+6. Coral, Lime, Olive midpoint, Turquoise midpoint, and Gray coal midpoint match Section 8 and the original worked values.
+7. Ratios totaling 0.999 or 1.001 fail; no silent normalization occurs.
+8. A negative ratio, ratio over 1, duplicate dye, or missing dye reference fails.
+9. Zero dye load returns zero component masses and `not_applicable` scale percentages without division by zero.
+10. Inputs containing `NaN`, infinity, exponent notation, commas, or embedded units fail.
+11. Repeating the same calculation 1,000 times produces identical canonical result JSON.
 
 ### 23.3 Range-template tests
 
@@ -1318,7 +1326,7 @@ All tests in the applicable release gate are mandatory. Numeric comparisons use 
 
 1. Every dose-plan component has method `direct`.
 2. Every component’s target weighing equals its target pure-dye mass exactly.
-3. Raspberry at 100 g and the Regular 0.50% pillar preset produces direct targets of 0.350/0.125/0.025 g.
+3. Raspberry at 100 g and the High 0.10 oz-per-2.2-lb paraffin tier produces direct targets of 0.1988636…/0.0710227…/0.0142045… g.
 4. No dosing-method or concentration field is accepted as production intent.
 5. Base wax is weighed directly and receives no carrier correction.
 
@@ -1400,7 +1408,7 @@ All tests in the applicable release gate are mandatory. Numeric comparisons use 
 
 - [ ] All 16 dyes and six formula templates exist in immutable seed data.
 - [ ] Source evidence is recorded and visibly marked verified or unverified.
-- [ ] The UI identifies Freedom Pillar Wax and American Soy Organics separately and exposes only Regular 0.50%, Medium 0.45%, and Light 0.40% pillar color-strength presets.
+- [ ] The UI provides paraffin, soy, beeswax, and palm selections; changing wax immediately replaces the strength choices with the applicable photographed range, defaulting to High.
 - [ ] Manufacturer dye-temperature and mixing guidance appears beside the calculator and in the printable production plan without being presented as a universal wax melting point.
 - [ ] Fixed and constrained formulas resolve deterministically.
 - [ ] Decimal mass arithmetic follows Section 6.5.
@@ -1413,7 +1421,7 @@ All tests in the applicable release gate are mandatory. Numeric comparisons use 
 - [ ] Visual-target mode selects only a predefined family, uses only its bounded declared adjustment model, and clearly displays its experimental limitation.
 - [ ] Sections 23.1–23.5 pass in automated tests.
 - [ ] Section 23.7 items 1–2 and 11–27 pass in automated tests.
-- [ ] The production weighing plan is usable at phone viewport sizes and printable without losing values or warnings.
+- [ ] The production weighing plan is usable at phone viewport sizes and printable without losing ingredient values or process instructions.
 
 ### 24.2 Release 1.1 gate
 
@@ -1480,7 +1488,10 @@ Null placeholders shall never silently become production defaults.
 - **D-016:** Selected screen colors use the nearest W3C CSS named sRGB color as a readable reference; this name remains separate from the wax-family match and exact selected HEX.
 - **D-017:** Release 1 repeats the transcribed manufacturer dye-temperature and mixing instructions in the calculator and production plan, preserving the unverified-source label and separating dye-dissolving guidance from wax-specific melting requirements.
 - **D-018:** At the operator’s direction, the fragrance bottle’s `1 oz/lb` instruction is interpreted as `1 US fl oz/lb`. Release 1 calculates mL from base wax + Vybar using exact US unit conversions, requests no density, and does not claim fragrance mass or exact finished-formulation mass.
-- **D-019:** Release 1 constrains pillar color strength to Regular 0.50%, Medium 0.45%, and Light 0.40%, defaulting to Regular. The percentages are relative dye-dose levels, not claims of linear visual intensity, and remain subject to physical color and burn testing.
+- **D-019:** Superseded by D-020. The former 1.00%/0.90%/0.80% experimental loads were retired after reviewing the kit instructions.
+- **D-020:** Superseded by D-021. The paraffin-only strength selector was replaced by wax-specific guidance.
+- **D-021:** Recipes and batch plans store a wax type. Paraffin uses 0.07–0.10 oz per 2.2 lb; soy, beeswax, and palm use 0.08–0.20 oz per 2.2 lb. Each exposes the source endpoints and a calculated midpoint, defaulting to High. The Coral starting ratio records the tested 50% Red / 41% Yellow / 9% White blend; any extra-white refinement remains an explicit operator adjustment.
+- **D-022:** Non-blocking diagnostics remain part of the calculation result but are not displayed on the streamlined Color Plan page. Blocking validation errors still prevent calculation and identify the affected fields.
 
 ## 27. Glossary
 

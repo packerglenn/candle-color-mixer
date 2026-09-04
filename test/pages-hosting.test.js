@@ -8,8 +8,8 @@ test("HTML assets remain relative for GitHub Pages project sites", () => {
   const html = read("index.html");
   assert.doesNotMatch(html, /(?:href|src)="\/(?!\/)/);
   assert.match(html, /href="\.\/styles\.css"/);
-  assert.match(html, /src="\.\/src\/app\.js"/);
-  assert.match(html, /id="dye-load"[^>]+type="hidden"[^>]+value="0\.50"/);
+  assert.match(html, /src="\.\/src\/studio-app\.js"/);
+  assert.match(html, /href="\.\/assets\/vendor\/bootstrap\/bootstrap\.min\.css"/);
   assert.doesNotMatch(html, /Transcribed soy guidance/);
 });
 
@@ -24,6 +24,7 @@ test("the service worker derives cached URLs from its own Pages scope", () => {
   const worker = read("sw.js");
   assert.match(worker, /const APP_ROOT = new URL\("\.\/", self\.location\.href\)/);
   assert.match(worker, /"\.\/src\/domain\/fragrance\.js"/);
+  assert.match(worker, /"\.\/src\/domain\/wax-guidance\.js"/);
   assert.doesNotMatch(worker, /^\s*"\//m);
 });
 
@@ -32,4 +33,13 @@ test("the repository contains an official Pages deployment workflow", () => {
   assert.match(workflow, /actions\/configure-pages@v5/);
   assert.match(workflow, /actions\/upload-pages-artifact@v4/);
   assert.match(workflow, /actions\/deploy-pages@v4/);
+});
+
+test("the local server requires an explicit LAN mode and serves only public app paths", () => {
+  const server = read("scripts/serve.mjs");
+  const packageJson = JSON.parse(read("package.json"));
+  assert.match(server, /argument\("host"\) \|\| "127\.0\.0\.1"/);
+  assert.match(packageJson.scripts["start:lan"], /--host=0\.0\.0\.0/);
+  assert.match(server, /publicRootFiles/);
+  assert.match(server, /hasPrivateSegment/);
 });

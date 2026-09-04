@@ -6,24 +6,50 @@
     "transcriptionDate": "2026-08-26",
     "notes": "Requires second-person comparison with the original manufacturer booklet."
   },
-  "baseWax": {
-    "id": "aso-freedom-pillar-wax",
-    "displayName": "Freedom Pillar Wax",
-    "manufacturer": "American Soy Organics"
-  },
+  "waxTypes": [
+    { "id": "paraffin", "displayName": "Paraffin wax", "materialId": "paraffin-wax", "guidanceProfileId": "paraffin" },
+    { "id": "soy", "displayName": "Soy wax", "materialId": "soy-wax", "guidanceProfileId": "soy-beeswax-palm" },
+    { "id": "beeswax", "displayName": "Beeswax", "materialId": "beeswax", "guidanceProfileId": "soy-beeswax-palm" },
+    { "id": "palm", "displayName": "Palm wax", "materialId": "palm-wax", "guidanceProfileId": "soy-beeswax-palm" }
+  ],
+  "dyeGuidanceProfiles": [
+    {
+      "id": "paraffin",
+      "doseBasisWaxLb": "2.2",
+      "minimumDoseOz": "0.07",
+      "maximumDoseOz": "0.10",
+      "minimumDyeLoadPct": "0.198863636363636363636364",
+      "maximumDyeLoadPct": "0.284090909090909090909091",
+      "defaultDyeStrengthId": "high",
+      "dyeStrengths": [
+        { "id": "high", "displayName": "High", "rangePosition": "maximum", "manufacturerDoseOzPer2_2Lb": "0.10", "pureDyeLoadPct": "0.284090909090909090909091" },
+        { "id": "midpoint", "displayName": "Midpoint", "rangePosition": "calculated_midpoint", "manufacturerDoseOzPer2_2Lb": "0.085", "pureDyeLoadPct": "0.241477272727272727272727" },
+        { "id": "low", "displayName": "Low", "rangePosition": "minimum", "manufacturerDoseOzPer2_2Lb": "0.07", "pureDyeLoadPct": "0.198863636363636363636364" }
+      ]
+    },
+    {
+      "id": "soy-beeswax-palm",
+      "doseBasisWaxLb": "2.2",
+      "minimumDoseOz": "0.08",
+      "maximumDoseOz": "0.20",
+      "minimumDyeLoadPct": "0.227272727272727272727273",
+      "maximumDyeLoadPct": "0.568181818181818181818182",
+      "defaultDyeStrengthId": "high",
+      "dyeStrengths": [
+        { "id": "high", "displayName": "High", "rangePosition": "maximum", "manufacturerDoseOzPer2_2Lb": "0.20", "pureDyeLoadPct": "0.568181818181818181818182" },
+        { "id": "midpoint", "displayName": "Midpoint", "rangePosition": "calculated_midpoint", "manufacturerDoseOzPer2_2Lb": "0.14", "pureDyeLoadPct": "0.397727272727272727272727" },
+        { "id": "low", "displayName": "Low", "rangePosition": "minimum", "manufacturerDoseOzPer2_2Lb": "0.08", "pureDyeLoadPct": "0.227272727272727272727273" }
+      ]
+    }
+  ],
   "additive": {
     "id": "vybar-103-pb165",
     "displayName": "Vybar 103 / PB 165"
   },
   "applicationPresets": {
-    "waxApplication": "pillar",
-    "defaultDyeStrengthId": "regular",
-    "dyeStrengths": [
-      { "id": "regular", "displayName": "Regular", "relativeStrengthPct": "100", "pureDyeLoadPct": "0.50" },
-      { "id": "medium", "displayName": "Medium", "relativeStrengthPct": "90", "pureDyeLoadPct": "0.45" },
-      { "id": "light", "displayName": "Light", "relativeStrengthPct": "80", "pureDyeLoadPct": "0.40" }
-    ],
-    "status": "engineering_starting_point"
+    "waxApplication": "decorative_molded_wax",
+    "defaultWaxTypeId": "paraffin",
+    "status": "manufacturer_wax_specific_guidance"
   },
   "dyeSystem": {
     "id": "candle-shop-16-color-kit",
@@ -76,6 +102,9 @@
     {
       "id": "manufacturer-coral",
       "displayName": "Coral",
+      "sourceType": "shop_trial",
+      "verificationStatus": "testing",
+      "notes": "Pinewood Blooms trial ratio from 2026-09-03: 50% Red, 41% Yellow, and 9% White. The result was close; record any additional White as an explicit batch adjustment.",
       "screenAnchorHex": "#df7869",
       "visualAdjustmentModel": {
         "kind": "two_color_plus_tint",
@@ -94,8 +123,8 @@
       "kind": "fixed",
       "components": [
         { "dyeId": "candle-shop-red", "ratio": "0.50" },
-        { "dyeId": "candle-shop-yellow", "ratio": "0.35" },
-        { "dyeId": "candle-shop-white", "ratio": "0.15" }
+        { "dyeId": "candle-shop-yellow", "ratio": "0.41" },
+        { "dyeId": "candle-shop-white", "ratio": "0.09" }
       ]
     },
     {
@@ -192,8 +221,7 @@
     }
   ],
   "manufacturerGuidance": {
-    "minimumDyeLoadPct": "0.227272727272727272727273",
-    "maximumDyeLoadPct": "0.568181818181818181818182",
+    "dosageVerificationStatus": "verified_from_user_photo",
     "waxFullyMeltedBeforeDye": true,
     "minimumDyeDissolveTemperatureF": "152",
     "maximumRecommendedDyeTemperatureF": "194",

@@ -53,7 +53,7 @@ test("invalid ranges, totals, and duplicate dyes fail explicitly", () => {
 test("all six seed templates resolve to exact 100% formulas", () => {
   const expected = {
     "manufacturer-raspberry": ["0.7", "0.25", "0.05"],
-    "manufacturer-coral": ["0.5", "0.35", "0.15"],
+    "manufacturer-coral": ["0.5", "0.41", "0.09"],
     "manufacturer-turquoise": ["0.825", "0.125", "0.05"],
     "manufacturer-lime": ["0.25", "0.7", "0.05"],
     "manufacturer-olive": ["0.85", "0.15"],

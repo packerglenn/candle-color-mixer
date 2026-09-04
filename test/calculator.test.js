@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { APPLICATION_PRESETS, TEMPLATE_BY_ID } from "../src/data/seed.js";
 import { calculateWeighingPlan } from "../src/domain/calculator.js";
 import { resolveTemplate } from "../src/domain/formula-engine.js";
+import { defaultStrengthForWaxType, guidanceForWaxType } from "../src/domain/wax-guidance.js";
 
 const scales = {
   wax: {
@@ -35,6 +36,7 @@ function raspberryComponents() {
 
 function baseInput(overrides = {}) {
   return {
+    waxTypeId: "paraffin",
     baseWaxTargetG: "100.000",
     dyeLoadPct: "0.30",
     components: raspberryComponents(),
@@ -56,34 +58,75 @@ test("direct Raspberry calculation matches the specification", () => {
   assert.equal(result.finishedFormulationTargetG, "100.3");
 });
 
-test("pillar application defaults to the regular color-strength preset", () => {
-  const regular = APPLICATION_PRESETS.dyeStrengths.find((strength) => (
-    strength.id === APPLICATION_PRESETS.defaultDyeStrengthId
-  ));
+test("decorative molded wax defaults to the kit's high paraffin dosage", () => {
+  const full = defaultStrengthForWaxType("paraffin");
   const result = calculateWeighingPlan(baseInput({
-    dyeLoadPct: regular.pureDyeLoadPct,
+    dyeLoadPct: full.pureDyeLoadPct,
   }));
 
-  assert.equal(APPLICATION_PRESETS.waxApplication, "pillar");
-  assert.equal(APPLICATION_PRESETS.status, "engineering_starting_point");
-  assert.equal(result.dyeLoadPct, "0.5");
-  assert.equal(result.pureDyeTotalG, "0.5");
-  assert.deepEqual(result.dosePlan.map((dose) => dose.targetPureDyeG), ["0.35", "0.125", "0.025"]);
+  assert.equal(APPLICATION_PRESETS.waxApplication, "decorative_molded_wax");
+  assert.equal(APPLICATION_PRESETS.status, "manufacturer_wax_specific_guidance");
+  assert.equal(full.manufacturerDoseOzPer2_2Lb, "0.10");
+  assert.equal(result.dyeLoadPct, "0.284090909090909090909091");
+  assert.equal(result.pureDyeTotalG, "0.284090909090909090909091");
+  assert.deepEqual(result.dosePlan.map((dose) => dose.targetPureDyeG), [
+    "0.198863636363636363636364",
+    "0.0710227272727272727272728",
+    "0.0142045454545454545454546",
+  ]);
+  assert.ok(!result.diagnostics.some((item) => item.code === "DYE_LOAD_OUTSIDE_GUIDANCE"));
 });
 
-test("pillar color-strength presets scale dye amount without changing ratios", () => {
+test("paraffin strengths span the photographed low, midpoint, and high range", () => {
   const expected = {
-    regular: { load: "0.5", total: "0.5" },
-    medium: { load: "0.45", total: "0.45" },
-    light: { load: "0.4", total: "0.4" },
+    high: { ounces: "0.10", load: "0.284090909090909090909091" },
+    midpoint: { ounces: "0.085", load: "0.241477272727272727272727" },
+    low: { ounces: "0.07", load: "0.198863636363636363636364" },
   };
 
-  for (const strength of APPLICATION_PRESETS.dyeStrengths) {
+  for (const strength of guidanceForWaxType("paraffin").dyeStrengths) {
     const result = calculateWeighingPlan(baseInput({ dyeLoadPct: strength.pureDyeLoadPct }));
     assert.equal(result.dyeLoadPct, expected[strength.id].load);
-    assert.equal(result.pureDyeTotalG, expected[strength.id].total);
+    assert.equal(result.pureDyeTotalG, expected[strength.id].load);
+    assert.equal(strength.manufacturerDoseOzPer2_2Lb, expected[strength.id].ounces);
     assert.deepEqual(result.dosePlan.map((dose) => dose.ratio), ["0.7", "0.25", "0.05"]);
+    assert.ok(!result.diagnostics.some((item) => item.code === "DYE_LOAD_OUTSIDE_GUIDANCE"));
   }
+});
+
+test("wax selection applies the correct kit range and material identity", () => {
+  const expected = {
+    soy: ["Soy wax", "soy-wax"],
+    beeswax: ["Beeswax", "beeswax"],
+    palm: ["Palm wax", "palm-wax"],
+  };
+
+  for (const [waxTypeId, [name, materialId]] of Object.entries(expected)) {
+    const high = defaultStrengthForWaxType(waxTypeId);
+    const result = calculateWeighingPlan(baseInput({ waxTypeId, dyeLoadPct: high.pureDyeLoadPct }));
+    assert.equal(high.manufacturerDoseOzPer2_2Lb, "0.20");
+    assert.equal(result.pureDyeTotalG, "0.568181818181818181818182");
+    assert.equal(result.baseWax.materialName, name);
+    assert.equal(result.baseWax.materialId, materialId);
+    assert.equal(result.baseWax.waxTypeId, waxTypeId);
+    assert.ok(!result.diagnostics.some((item) => item.code === "DYE_LOAD_OUTSIDE_GUIDANCE"));
+  }
+});
+
+test("last night's 50/41/9 Coral formula scales to the kit's high dose for 100 g wax", () => {
+  const components = resolveTemplate(TEMPLATE_BY_ID.get("manufacturer-coral"))
+    .map((component) => ({ dyeId: component.dyeId, ratio: component.ratio.toSignificant() }));
+  const full = defaultStrengthForWaxType("paraffin");
+  const result = calculateWeighingPlan(baseInput({
+    dyeLoadPct: full.pureDyeLoadPct,
+    components,
+  }));
+
+  assert.deepEqual(result.dosePlan.map((dose) => [dose.dyeName, dose.ratio, dose.targetPureDyeG]), [
+    ["Red", "0.5", "0.142045454545454545454546"],
+    ["Yellow", "0.41", "0.116477272727272727272727"],
+    ["White", "0.09", "0.0255681818181818181818182"],
+  ]);
 });
 
 test("optional additive sets the fragrance basis and known pre-fragrance mass", () => {

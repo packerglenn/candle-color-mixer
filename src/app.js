@@ -108,7 +108,7 @@ function processGuidanceMarkup() {
 function initTemplates() {
   templateSelect.innerHTML = [
     ...FORMULA_TEMPLATES.map((template) => (
-      `<option value="${template.id}">${escapeHtml(template.displayName)} · manufacturer template</option>`
+      `<option value="${template.id}">${escapeHtml(template.displayName)} · starter formula</option>`
     )),
     '<option value="custom">Custom formula</option>',
   ].join("");
@@ -123,7 +123,7 @@ function updateDyeStrength({ recalculate = true } = {}) {
 
 function initDyeStrength() {
   dyeStrengthSelect.innerHTML = APPLICATION_PRESETS.dyeStrengths.map((strength) => (
-    `<option value="${strength.id}">${escapeHtml(strength.displayName)} · ${strength.relativeStrengthPct}% strength · ${strength.pureDyeLoadPct}% dye load</option>`
+    `<option value="${strength.id}">${escapeHtml(strength.displayName)} · ${strength.manufacturerDoseOzPer2_2Lb} oz per 2.2 lb</option>`
   )).join("");
   dyeStrengthSelect.value = APPLICATION_PRESETS.defaultDyeStrengthId;
   updateDyeStrength({ recalculate: false });
@@ -528,7 +528,7 @@ function renderResults(result, { scroll = true } = {}) {
     <div class="result-heading">
       <div>
         <p class="step-label">Production plan</p>
-        <h2>${escapeHtml(templateSelect.options[templateSelect.selectedIndex].text.replace(" · manufacturer template", ""))}</h2>
+        <h2>${escapeHtml(templateSelect.options[templateSelect.selectedIndex].text.replace(" · starter formula", ""))}</h2>
         ${result.visualTarget ? `<div class="result-target"><i style="background:${escapeHtml(result.visualTarget.hex)}"></i><span>Visual target ${escapeHtml(result.visualTarget.standardName)} (${escapeHtml(result.visualTarget.hex.toUpperCase())}) · experimental family adjustment</span></div>` : ""}
       </div>
       <button class="small-button print-button" type="button">Print plan</button>

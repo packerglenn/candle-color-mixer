@@ -1,9 +1,10 @@
-import { BASE_WAX, DYE_BY_ID, MANUFACTURER_GUIDANCE, VYBAR } from "../data/seed.js";
+import { APPLICATION_PRESETS, DYE_BY_ID, MANUFACTURER_GUIDANCE, VYBAR } from "../data/seed.js";
 import { ExactDecimal } from "./decimal.js";
 import { DomainError, diagnostic } from "./errors.js";
 import { calculateFragranceDose } from "./fragrance.js";
 import { validateFixedComponents } from "./formula-engine.js";
 import { evaluateScale, parseScaleProfile } from "./scale-engine.js";
+import { guidanceForWaxType, waxTypeById } from "./wax-guidance.js";
 
 function parseNonNegative(value, fieldPath, { required = true } = {}) {
   if (!required && (value === null || value === undefined || value === "")) return null;
@@ -33,6 +34,12 @@ function serializeScaleResult(result) {
 
 export function calculateWeighingPlan(input) {
   const diagnostics = [];
+  const waxTypeId = input.waxTypeId ?? APPLICATION_PRESETS.defaultWaxTypeId;
+  const waxType = waxTypeById(waxTypeId);
+  const dyeGuidance = guidanceForWaxType(waxTypeId);
+  if (!waxType || !dyeGuidance) {
+    throw new DomainError("REFERENCE_NOT_FOUND", "Choose a supported wax type.", "waxTypeId");
+  }
   const baseWax = parseNonNegative(input.baseWaxTargetG, "baseWaxTargetG");
   if (baseWax.compare(ExactDecimal.ZERO) <= 0) {
     throw new DomainError("INVALID_DECIMAL", "Base-wax target must be greater than zero.", "baseWaxTargetG");
@@ -57,7 +64,7 @@ export function calculateWeighingPlan(input) {
     diagnostics.push(diagnostic(
       "SOURCE_TRANSCRIPTION_UNVERIFIED",
       "warning",
-      "Manufacturer ratios and dosage guidance await a second-person source check.",
+      "Starter color ratios and process guidance still need source verification. The wax-specific dye dosages were checked against your kit photo.",
       "templateId",
     ));
   }
@@ -71,13 +78,16 @@ export function calculateWeighingPlan(input) {
     ));
   }
 
-  const guidanceMinimum = ExactDecimal.parse(MANUFACTURER_GUIDANCE.minimumDyeLoadPct);
-  const guidanceMaximum = ExactDecimal.parse(MANUFACTURER_GUIDANCE.maximumDyeLoadPct);
+  const guidanceMinimum = ExactDecimal.parse(dyeGuidance.minimumDyeLoadPct);
+  const guidanceMaximum = ExactDecimal.parse(dyeGuidance.maximumDyeLoadPct);
   if (dyeLoadPct.compare(guidanceMinimum) < 0 || dyeLoadPct.compare(guidanceMaximum) > 0) {
+    const aboveGuidance = dyeLoadPct.compare(guidanceMaximum) > 0;
     diagnostics.push(diagnostic(
       "DYE_LOAD_OUTSIDE_GUIDANCE",
       "warning",
-      `Dye load is outside the transcribed solid-dye guidance of ${guidanceMinimum.toFixed(3)}–${guidanceMaximum.toFixed(3)}%.`,
+      aboveGuidance
+        ? `This dye load is above your kit’s ${waxType.displayName.toLowerCase()} guidance of ${guidanceMinimum.toFixed(3)}–${guidanceMaximum.toFixed(3)}%. Confirm complete dissolution, cured appearance, surface quality, and color transfer with a physical test.`
+        : `This dye load is below your kit’s ${waxType.displayName.toLowerCase()} guidance of ${guidanceMinimum.toFixed(3)}–${guidanceMaximum.toFixed(3)}%. Confirm the cured result with a physical test.`,
       "dyeLoadPct",
     ));
   }
@@ -130,8 +140,10 @@ export function calculateWeighingPlan(input) {
 
   return Object.freeze({
     baseWax: {
-      materialId: BASE_WAX.id,
-      materialName: BASE_WAX.displayName,
+      materialId: waxType.materialId,
+      materialName: waxType.displayName,
+      waxTypeId: waxType.id,
+      guidanceProfileId: dyeGuidance.id,
       targetTotalG: canonical(baseWax),
       targetSeparateG: canonical(baseWax),
       scale: serializeScaleResult(separateWaxScale),

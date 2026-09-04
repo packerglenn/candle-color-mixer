@@ -9,9 +9,28 @@ function deepFreeze(value) {
 }
 
 export const SOURCE_EVIDENCE = deepFreeze({ ...seed.sourceEvidence });
-export const BASE_WAX = deepFreeze({ ...seed.baseWax });
 export const VYBAR = deepFreeze({ ...seed.additive });
-export const APPLICATION_PRESETS = deepFreeze({ ...seed.applicationPresets });
+export const WAX_TYPES = Object.freeze(seed.waxTypes.map((waxType) => deepFreeze(waxType)));
+export const WAX_TYPE_BY_ID = new Map(WAX_TYPES.map((waxType) => [waxType.id, waxType]));
+export const DYE_GUIDANCE_PROFILES = Object.freeze(
+  seed.dyeGuidanceProfiles.map((profile) => deepFreeze(profile)),
+);
+export const DYE_GUIDANCE_PROFILE_BY_ID = new Map(
+  DYE_GUIDANCE_PROFILES.map((profile) => [profile.id, profile]),
+);
+const defaultWaxType = WAX_TYPE_BY_ID.get(seed.applicationPresets.defaultWaxTypeId);
+const defaultGuidanceProfile = DYE_GUIDANCE_PROFILE_BY_ID.get(defaultWaxType.guidanceProfileId);
+export const BASE_WAX = deepFreeze({
+  id: defaultWaxType.materialId,
+  displayName: defaultWaxType.displayName,
+  manufacturer: "Brand not recorded",
+  waxTypeId: defaultWaxType.id,
+});
+export const APPLICATION_PRESETS = deepFreeze({
+  ...seed.applicationPresets,
+  defaultDyeStrengthId: defaultGuidanceProfile.defaultDyeStrengthId,
+  dyeStrengths: defaultGuidanceProfile.dyeStrengths,
+});
 
 export const DYES = Object.freeze(seed.dyes.map((dye) => Object.freeze({
   id: `candle-shop-${dye.slug}`,
